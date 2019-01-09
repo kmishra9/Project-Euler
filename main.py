@@ -42,3 +42,60 @@ print(even_fibonacci_numbers())
 ################################################################################
 # 3
 ################################################################################
+
+def is_factor(n, potential_factor):
+    return n % potential_factor == 0
+
+def is_prime(n):
+    for i in range(2, int(n**.5)+1):
+        if is_factor(n=n, potential_factor=i):
+            return False
+    return True
+
+def factor(n):
+    for i in range(2, n+1):
+        if is_factor(n=n, potential_factor=i):
+            return (i, n//i)
+
+def largest_prime_factor(n):
+    if is_prime(n):
+        return n
+
+    factor_1, factor_2 = factor(n)
+
+    if is_prime(factor_1) and is_prime(factor_2):
+        return max(factor_1, factor_2)
+
+    return max(largest_prime_factor(factor_1), largest_prime_factor(factor_2))
+
+assert largest_prime_factor(10) == 5
+assert largest_prime_factor(11) == 11
+assert largest_prime_factor(13195) == 29
+print(largest_prime_factor(600851475143))
+
+################################################################################
+# 4
+################################################################################
+
+def is_palindrome(n):
+    assert type(n) is int
+    return n == int(str(n)[::-1])
+
+def largest_palindrome_product(top=999, bottom=100):
+    largest_so_far = -1
+    for i in range(top, bottom, -1):
+        for j in range(i, bottom, -1):
+            product = i * j
+            if product > largest_so_far and is_palindrome(product):
+                largest_so_far = product
+            elif product < largest_so_far:
+                break
+
+    return largest_so_far
+
+assert largest_palindrome_product(top=99, bottom=10) == 9009
+print(largest_palindrome_product())
+
+################################################################################
+# 5
+################################################################################
