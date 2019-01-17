@@ -15,7 +15,7 @@ def multiples_of_3_or_5(n):
     return sum([i for i in range(n) if i % 3 == 0 or i % 5 == 0])
 
 assert multiples_of_3_or_5(10) == 23
-print(multiples_of_3_or_5(1000))
+multiples_of_3_or_5(1000)
 
 ################################################################################
 # 2
@@ -41,7 +41,7 @@ def even_fibonacci_numbers_recursive(first=0, second=1, total=0, threshold=40000
                                             threshold=threshold)
 
 assert even_fibonacci_numbers() == even_fibonacci_numbers_recursive()
-print(even_fibonacci_numbers())
+even_fibonacci_numbers()
 
 ################################################################################
 # 3
@@ -76,7 +76,7 @@ def largest_prime_factor(n):
 assert largest_prime_factor(10) == 5
 assert largest_prime_factor(11) == 11
 assert largest_prime_factor(13195) == 29
-print(largest_prime_factor(600851475143))
+largest_prime_factor(600851475143)
 
 ################################################################################
 # 4
@@ -86,7 +86,7 @@ def is_palindrome(n):
     assert type(n) is int
     return str(n) == str(n)[::-1]
 
-def largest_palindrome_product(top=999, bottom=100):
+def largest_palindrome_product(top, bottom):
     largest_so_far = -1
     for i in range(top, bottom, -1):
         for j in range(i, bottom, -1):
@@ -99,7 +99,7 @@ def largest_palindrome_product(top=999, bottom=100):
     return largest_so_far
 
 assert largest_palindrome_product(top=99, bottom=10) == 9009
-print(largest_palindrome_product())
+largest_palindrome_product(top=999, bottom=100)
 
 ################################################################################
 # 5 - Attempt 1
@@ -182,7 +182,7 @@ def smallest_multiple(n):
     return multiple_so_far
 
 assert smallest_multiple(10) == 2520
-print(smallest_multiple(20))
+smallest_multiple(20)
 
 ################################################################################
 # 6
@@ -205,7 +205,7 @@ def sum_square_difference(n):
     return abs(sum_of_squares(n) - square_of_sum(n))
 
 assert sum_square_difference(10) == 2640
-print(sum_square_difference(100))
+sum_square_difference(100)
 
 ################################################################################
 # 7
@@ -226,7 +226,7 @@ def nth_prime(n):
 
 assert nth_prime(1) == 2
 assert nth_prime(6) == 13
-print(nth_prime(10001))
+nth_prime(10001)
 
 ################################################################################
 # 8
@@ -267,8 +267,55 @@ with open("data/thousand_digit_series.txt", 'r') as series_file:
     thousand_digit_series = series_file.read().replace('\n', '')
 
 assert largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=4) == 9*9*8*9
-print(largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=13))
+largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=13)
 
 ################################################################################
 # 9
 ################################################################################
+def triplet_compute(a, b, desired_abc_sum):
+    """Given a and b, finds the pythagorean triple (a, b, c) and returns a*b*c if a+b+c = desired_abc_sum or -1 otherwise"""
+    c = (a**2 + b**2)**.5
+    if not c.is_integer():
+        return -1
+
+    c = int(c)
+
+    abc_sum = a + b + c
+    if abc_sum != desired_abc_sum:
+        return -1
+
+    abc_product = a * b * c
+    return abc_product
+
+assert triplet_compute(a=3, b=4, desired_abc_sum=3+4+5) == 3*4*5
+assert triplet_compute(a=3, b=4, desired_abc_sum=3+4+6) == -1
+
+def special_pythagorean_triplet(n):
+    """Given a number n, finds the pythagorean triplet whose sum is equal to n and returns the product of the pythagorean triplet. This function handles the iteration of a and b. triplet_compute determines if a and b are part of the correct triplet"""
+
+    for a in range(n//2, 1, -1):
+        for b in range(a, 1, -1):
+            triplet_product = triplet_compute(a=a, b=b, desired_abc_sum=n)
+            if triplet_product is not -1:
+                return triplet_product
+
+    return "No triplet found"
+
+assert special_pythagorean_triplet(3+4+5) == 3*4*5
+assert special_pythagorean_triplet(3+4+6) == "No triplet found"
+assert special_pythagorean_triplet(5+12+13) == 5*12*13
+
+special_pythagorean_triplet(1000)
+
+################################################################################
+# 10
+################################################################################
+
+def sum_of_primes(n):
+    """Finds the sum of all primes below n"""
+    return sum([i for i in range(2, n) if is_prime(i)])
+
+assert sum_of_primes(3) == 2
+assert sum_of_primes(10) == 2 + 3 + 5 + 7 == 17
+
+sum_of_primes(2000000)
