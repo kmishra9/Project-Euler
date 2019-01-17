@@ -1,7 +1,11 @@
 ################################################################################
 # Project Euler Practice
 # Author: kmishra9
+# Previous Attempts: https://drive.google.com/file/d/0BwPzCEOJw0myMTl2STJaQjBoOGs/view
 ################################################################################
+
+import os
+os.chdir("/Users/kunalmishra/Project-Euler/")
 
 ################################################################################
 # 1
@@ -44,6 +48,7 @@ print(even_fibonacci_numbers())
 ################################################################################
 
 def is_factor(n, potential_factor):
+    """Returns whether potential_factor is or is not a true factor of n"""
     return n % potential_factor == 0
 
 def is_prime(n):
@@ -79,7 +84,7 @@ print(largest_prime_factor(600851475143))
 
 def is_palindrome(n):
     assert type(n) is int
-    return n == int(str(n)[::-1])
+    return str(n) == str(n)[::-1]
 
 def largest_palindrome_product(top=999, bottom=100):
     largest_so_far = -1
@@ -97,5 +102,173 @@ assert largest_palindrome_product(top=99, bottom=10) == 9009
 print(largest_palindrome_product())
 
 ################################################################################
-# 5
+# 5 - Attempt 1
+################################################################################
+
+def divisible_through(count, n):
+    """Returns whether count is divisble by numbers 1 through n"""
+    for i in range(n, 1, -1):
+        if not is_factor(n=count, potential_factor=i):
+            return False
+
+    return True
+
+def smallest_multiple_inefficient(n):
+    """Finds the least common multiple of all numbers 1 through n"""
+    count = 1
+    while not divisible_through(count, n):
+        count += 1
+
+    return count
+
+################################################################################
+# 5 - Attempt 2
+################################################################################
+
+def prime_factorization(n):
+    """Given a number, n, returns a map of n's prime factors and their frequency"""
+    if is_prime(n):
+        return {n : 1}
+
+    factor_1, factor_2 = factor(n)
+
+    factor_1_factors = prime_factorization(factor_1)
+    factor_2_factors = prime_factorization(factor_2)
+
+    aggregate_factors = factor_1_factors
+    for key in factor_2_factors.keys():
+        aggregate_factors[key] = factor_2_factors[key] + aggregate_factors.get(key, 0)
+
+    return aggregate_factors
+
+assert prime_factorization(5) == {5 : 1}
+assert prime_factorization(10) == {5 : 1, 2 : 1}
+assert prime_factorization(9) == {3 : 2}
+assert prime_factorization(18) == {3 : 2, 2 : 1}
+
+def least_common_multiple(x, y):
+    """LCM Rules: http://www.math.com/school/subject1/lessons/S1U3L3DP.html"""
+    x_primes = prime_factorization(x)
+    y_primes = prime_factorization(y)
+
+    lcm_primes = x_primes
+
+    for key in y_primes.keys():
+        lcm_primes[key] = max(y_primes[key], lcm_primes.get(key, -1))
+
+    multiple = 1
+
+    for key in lcm_primes.keys():
+        multiple *= (key ** lcm_primes[key])
+
+    return multiple
+
+assert least_common_multiple(5, 2) == least_common_multiple(2, 5) == 10
+assert least_common_multiple(3, 6) == least_common_multiple(6, 3) == 6
+assert least_common_multiple(3, 3) == 3
+assert least_common_multiple(20, 19) == least_common_multiple(20, 19) == 20*19
+
+def smallest_multiple(n):
+    """Finds the least common multiple of all numbers 1 through n
+    Example: smallest_multiple(10)
+    10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+    5,2 ; 3,3 ; 2,2,2 ; 7 ; 3,2 ; 5 ; 2,2 ; 3 ; 2 ; 1
+    {1, 2,2,2, 3,3, 5, 7} = 2520
+    """
+    multiple_so_far = n
+    for i in range(n-1, 1, -1):
+        multiple_so_far = least_common_multiple(x=multiple_so_far, y=i)
+
+    return multiple_so_far
+
+assert smallest_multiple(10) == 2520
+print(smallest_multiple(20))
+
+################################################################################
+# 6
+################################################################################
+
+def sum_of_squares(n):
+    """Returns the sum of the squares of the first n numbers"""
+    return sum([i**2 for i in range(n+1)])
+
+assert sum_of_squares(10) == 385
+
+def square_of_sum(n):
+    """Returns the square of the sum of the first n numbers"""
+    return sum([i for i in range(n+1)])**2
+
+assert square_of_sum(10) == 3025
+
+def sum_square_difference(n):
+    """Returns the difference between the sum of squares of the first n numbers and square of sum of the first n numbers"""
+    return abs(sum_of_squares(n) - square_of_sum(n))
+
+assert sum_square_difference(10) == 2640
+print(sum_square_difference(100))
+
+################################################################################
+# 7
+################################################################################
+
+def nth_prime(n):
+    """Returns the nth prime, given that 2 is the 1st and 13 is the 6th"""
+    primes = []
+
+    index = 2
+    while len(primes) < n:
+        if is_prime(index):
+            primes.append(index)
+
+        index += 1
+
+    return primes[n-1]
+
+assert nth_prime(1) == 2
+assert nth_prime(6) == 13
+print(nth_prime(10001))
+
+################################################################################
+# 8
+################################################################################
+
+def slices_of_series(series, slice_length):
+    """Returns a list of iterative slices from series of slice_length"""
+    return [series[index:index+slice_length] for index in range(len(series)) if len(series[index:index+slice_length]) == slice_length]
+
+assert set(slices_of_series(series="123", slice_length=1)) == set(slices_of_series(series="321", slice_length=1)) == set(["1", "2", "3"])
+assert set(slices_of_series(series="123", slice_length=2)) == set(["12", "23"])
+assert set(slices_of_series(series="321", slice_length=2)) == set(["21", "32"])
+assert set(slices_of_series(series="123", slice_length=3)) == set(["123"])
+
+def string_slice_product(string_slice):
+    """Returns the product of the individual single-digit numbers contained within the string_slice"""
+    numbered_list = [int(string_number) for string_number in list(string_slice)]
+    product = 1
+    for number in numbered_list:
+        product *= number
+    return product
+
+assert string_slice_product("123") == string_slice_product("321") == 1*2*3
+assert string_slice_product("999") == 9**3
+assert string_slice_product("9999999999999999999999999999999990") == 0
+
+
+def largest_product_in_a_series(series, num_adjacent_digits):
+    """Returns the largest product of a given number of adjacent digits in a series of digits"""
+    assert type(series) == str and type(num_adjacent_digits) == int and (0 < num_adjacent_digits <= len(series))
+    possible_largest_sequences = slices_of_series(series=series, slice_length=num_adjacent_digits)
+    possible_largest_sequences_trim_zeroes = [sequence for sequence in possible_largest_sequences if "0" not in sequence]
+    largest_product = max([string_slice_product(string_slice) for string_slice in possible_largest_sequences_trim_zeroes])
+    return largest_product
+
+# Loading large data string
+with open("data/thousand_digit_series.txt", 'r') as series_file:
+    thousand_digit_series = series_file.read().replace('\n', '')
+
+assert largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=4) == 9*9*8*9
+print(largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=13))
+
+################################################################################
+# 9
 ################################################################################
