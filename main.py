@@ -263,8 +263,8 @@ def largest_product_in_a_series(series, num_adjacent_digits):
     return largest_product
 
 # Loading large data string
-with open("data/thousand_digit_series.txt", 'r') as series_file:
-    thousand_digit_series = series_file.read().replace('\n', '')
+with open("data/thousand_digit_series.txt", "r") as series_file:
+    thousand_digit_series = series_file.read().replace("\n", "")
 
 assert largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=4) == 9*9*8*9
 largest_product_in_a_series(series=thousand_digit_series, num_adjacent_digits=13)
@@ -319,3 +319,122 @@ assert sum_of_primes(3) == 2
 assert sum_of_primes(10) == 2 + 3 + 5 + 7 == 17
 
 sum_of_primes(2000000)
+
+################################################################################
+# 11
+################################################################################
+def find_sequence(grid, seq_length, x_start, y_start, x_direction, y_direction):
+    """ Given a grid, a coordinate to begin, a 'direction' to move, and a 'length' to move for, finds a sequence at most as long as seq_length"""
+    assert type(grid) is list and len(grid) > 0
+    assert type(seq_length) == type(x_start) == type(y_start) == type(x_direction) == type(y_direction)
+    assert seq_length >= 0 and -1 <= x_direction <= 1 and -1 <= y_direction <= 1
+
+    if seq_length == 0 or x_start < 0 or x_start >= len(grid) or y_start < 0 or y_start >= len(grid[x_start]):
+        return []
+
+    current_element_of_seq = grid[x_start][y_start]
+
+    return [current_element_of_seq] + find_sequence(grid=grid, seq_length=seq_length-1, x_start=x_start+x_direction, y_start=y_start+y_direction, x_direction=x_direction, y_direction=y_direction)
+
+test_grid = [[0.0, 0.1], [1.0, 1.1]]
+test_calls = [
+    # Valid calls from (0, 0)
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=1, y_direction=0),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=0, y_direction=1),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=1, y_direction=1),
+    # Invalid calls from (0, 0)
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=-1, y_direction=0),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=0, y_direction=-1),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=-1, y_direction=-1),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=0, x_direction=1, y_direction=-1),
+    # Valid calls from (1, 1)
+    find_sequence(grid=test_grid, seq_length=2, x_start=1, y_start=1, x_direction=-1, y_direction=0),
+    find_sequence(grid=test_grid, seq_length=2, x_start=1, y_start=1, x_direction=0, y_direction=-1),
+    find_sequence(grid=test_grid, seq_length=2, x_start=1, y_start=1, x_direction=-1, y_direction=-1),
+    # Valid calls from (0, 1) and (1, 0)
+    find_sequence(grid=test_grid, seq_length=2, x_start=1, y_start=0, x_direction=-1, y_direction=1),
+    find_sequence(grid=test_grid, seq_length=2, x_start=0, y_start=1, x_direction=1, y_direction=-1)
+]
+expected_results = [
+    [0.0, 1.0], [0.0, 0.1], [0.0, 1.1],
+    [0.0], [0.0], [0.0], [0.0],
+    [1.1, 0.1], [1.1, 1.0], [1.1, 0.0],
+    [1.0, 0.1], [0.1, 1.0]
+]
+assert test_calls == expected_results
+
+def convert_grid_string_to_2D_list(grid_string, num_rows, num_columns):
+    """Given a string of space-seperated integers, converts to a 2D list grid of integers"""
+    grid_1D = [int(string_num) for string_num in grid_string.split(" ") if string_num is not ""]
+    grid_2D = [[0 for row_index in range(num_rows)] for column_index in range(num_columns)]
+
+    for column_index in range(num_columns):
+        for row_index in range(num_rows):
+            grid_2D[column_index][row_index] = grid_1D[column_index * num_rows + row_index]
+            #print(column_index * num_rows + row_index)
+
+    return grid_2D
+
+test_grid_string = "1 2 3 4 5 6"
+test_calls = [
+    convert_grid_string_to_2D_list(grid_string=test_grid_string, num_rows=1, num_columns=6),
+    convert_grid_string_to_2D_list(grid_string=test_grid_string, num_rows=2, num_columns=3),
+    convert_grid_string_to_2D_list(grid_string=test_grid_string, num_rows=3, num_columns=2),
+    convert_grid_string_to_2D_list(grid_string=test_grid_string, num_rows=6, num_columns=1)
+]
+expected_results = [
+    [[1], [2], [3], [4], [5], [6]],
+    [[1, 2], [3, 4], [5, 6]],
+    [[1, 2, 3], [4, 5, 6]],
+    [[1, 2, 3, 4, 5, 6]],
+]
+assert test_calls == expected_results
+
+def list_product(lst):
+    """Collapses a list to the product of its elements"""
+    total = 1
+    for element in lst:
+        total *= element
+    return total
+
+def largest_product_in_a_grid(grid_string, num_rows, num_columns, seq_length):
+    grid_2D = convert_grid_string_to_2D_list(grid_string=grid_string, num_rows=num_rows, num_columns=num_columns)
+
+    # Getting all possible sequences -- horizontal, vertical, forwardslash and backslash
+    sequences = []
+    for column_index in range(num_columns):
+        for row_index in range(num_rows):
+            for x_direction in (0, 1):
+                for y_direction in (-1, 0, 1):
+                    if x_direction == y_direction == 0:    # Static direction case
+                        continue
+
+                    sequences.append(find_sequence(grid=grid_2D, seq_length=seq_length, x_start=column_index, y_start=row_index, x_direction=x_direction, y_direction=y_direction))
+
+    # Return the maximum product of each sequence
+    return max([list_product(sequence) for sequence in sequences])
+
+test_calls = [
+    # seq_length=2 calls
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=1, num_columns=6, seq_length=2),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=2, num_columns=3, seq_length=2),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=3, num_columns=2, seq_length=2),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=6, num_columns=1, seq_length=2),
+    # seq_length=5 calls
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=1, num_columns=6, seq_length=5),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=2, num_columns=3, seq_length=5),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=3, num_columns=2, seq_length=5),
+    largest_product_in_a_grid(grid_string=test_grid_string, num_rows=6, num_columns=1, seq_length=5)
+]
+expected_results = [5*6 for i in range(4)] + [2*3*4*5*6, 2*4*6, 4*5*6, 2*3*4*5*6]
+assert test_calls == expected_results
+
+# Load and clean data
+with open("data/twenty_square_grid.txt", "r") as grid_file:
+    twenty_square_grid = grid_file.read().replace("\n", " ")
+
+largest_product_in_a_grid(grid_string=twenty_square_grid, num_rows=20, num_columns=20, seq_length=4)
+
+################################################################################
+# 12
+################################################################################
