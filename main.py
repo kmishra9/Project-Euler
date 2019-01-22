@@ -5,6 +5,7 @@
 ################################################################################
 
 import os
+import itertools
 os.chdir("/Users/kunalmishra/Project-Euler/")
 
 ################################################################################
@@ -437,4 +438,70 @@ largest_product_in_a_grid(grid_string=twenty_square_grid, num_rows=20, num_colum
 
 ################################################################################
 # 12
+################################################################################
+def combinations(lst, num_elements):
+    """Given a list, will return a list of tuples of every combination of num_elements long"""
+    return list(itertools.combinations(lst, num_elements))
+
+def factorization(n):
+    """Given a number, n, returns a set of n's factors"""
+    # Get a list of prime factors of n
+    prime_factors_dict = prime_factorization(n)
+    prime_factors_expanded = list(itertools.chain.from_iterable(([[key]*value for (key, value) in prime_factors_dict.items()])))
+
+    # Find all combinations (and products) of prime factors
+    factor_combinations = []
+    for num_elements in range(1, len(prime_factors_expanded)+1):
+        factor_combinations += combinations(lst=prime_factors_expanded, num_elements=num_elements)
+
+    factors = set([list_product(factor_permutation) for factor_permutation in factor_combinations] + [1, n])
+
+    return factors
+
+assert factorization(2) == set([1, 2])
+assert factorization(3) == set([1, 3])
+assert factorization(10) == set([1, 2, 5, 10])
+assert factorization(12) == set([1, 2, 3, 4, 6, 12])
+
+def highly_divisible_triangular_number(num_divisors):
+    max_num_divisors_found = 0
+    triangular_numbers = [0]
+    index = 1
+
+    while max_num_divisors_found < num_divisors:
+        # Calculate the next triangular number
+        next_triangular_number = triangular_numbers[index - 1] + index
+
+        # Find its number of factors
+        factors = factorization(next_triangular_number)
+        max_num_divisors_found = max(max_num_divisors_found, len(factors))
+
+        triangular_numbers.append(next_triangular_number)
+        index += 1
+
+    return triangular_numbers[-1]
+
+assert highly_divisible_triangular_number(num_divisors=5) == 28
+highly_divisible_triangular_number(num_divisors=500)
+
+################################################################################
+# 13
+################################################################################
+
+def sum_large_numbers(lst, first_x_digits):
+    """Given a list of strings of large numbers, finds the first x digits of the sum"""
+    total = 0
+    for string_num in lst:
+        total += int(string_num)
+
+    return str(total)[:first_x_digits]
+
+# Load and clean data
+with open("data/fifty_digit_numbers.txt", "r") as fifty_digit_numbers_file:
+    fifty_digit_numbers = fifty_digit_numbers_file.read().split()
+
+sum_large_numbers(lst=fifty_digit_numbers, first_x_digits=10)
+
+################################################################################
+# 14
 ################################################################################
