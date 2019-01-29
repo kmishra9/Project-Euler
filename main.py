@@ -6,6 +6,8 @@
 
 import os
 import itertools
+import numpy as np
+import scipy as sp
 os.chdir("/Users/kunalmishra/Project-Euler/")
 
 ################################################################################
@@ -504,4 +506,134 @@ sum_large_numbers(lst=fifty_digit_numbers, first_x_digits=10)
 
 ################################################################################
 # 14
+################################################################################
+def collatz_sequence(n, sequence=None, memoize_dict=None):
+    """Given a number n, and a listed sequence up to that number n, returns a list of the collatz sequence of that number"""
+    if sequence is None:
+        sequence = list()
+
+    if (memoize_dict is not None) and (n in memoize_dict):
+        return sequence + memoize_dict[n]
+
+    sequence.append(n)
+
+    if n == 1:
+        rest_of_sequence = []
+    elif n % 2 == 0:
+        rest_of_sequence = collatz_sequence(n=n//2, memoize_dict=memoize_dict)
+    else:
+        rest_of_sequence = collatz_sequence(n=3*n+1, memoize_dict=memoize_dict)
+
+    full_sequence = sequence + rest_of_sequence
+    if (memoize_dict is not None):
+        memoize_dict[n] = full_sequence
+
+    return full_sequence
+
+
+assert collatz_sequence(1) == [1]
+assert collatz_sequence(2) == [2, 1]
+assert collatz_sequence(3) == [3, 10, 5, 16, 8, 4, 2, 1]
+
+memoize_dict = dict()
+assert collatz_sequence(1, memoize_dict=memoize_dict) == [1] and len(memoize_dict) == 1
+assert collatz_sequence(2, memoize_dict=memoize_dict) == [2, 1] and len(memoize_dict) == 2
+assert collatz_sequence(3, memoize_dict=memoize_dict) == [3, 10, 5, 16, 8, 4, 2, 1] and len(memoize_dict) == 8
+
+def longest_collatz_sequence(n):
+    """Given a number n, returns a tuple of (the number between 1 and n that has the longest collatz sequence, and the length of the sequence)"""
+    memoize_dict = dict()
+    sequence_lengths = [len(collatz_sequence(n=i, memoize_dict=memoize_dict)) for i in range(1, n)]
+
+    return np.argmax(sequence_lengths) + 1, np.max(sequence_lengths)
+
+assert longest_collatz_sequence(3+1) == (3, len(collatz_sequence(3)))
+
+longest_collatz_sequence(1000000)
+
+################################################################################
+# 15
+################################################################################
+def generate_grid(grid_dimension):
+    """Given a grid dimension, returns a square 2D list (list of lists) with a dimension of grid_dimension x grid_dimension filled with zeroes"""
+    return [[0 for i in range(grid_dimension)] for j in range(grid_dimension)]
+
+assert generate_grid(1) == [[0]]
+assert generate_grid(2) == [[0, 0], [0, 0]]
+assert generate_grid(3) == [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+
+def prior_positions(x, y, grid_dimension):
+    """Given an (x,y) coordinate and the grid dimension returns a list of (x,y) positions that can lead to the given position, assuming only right and down moves are allowed"""
+    priors = []
+
+    if x > 0:
+        priors.append((x-1, y))
+
+    if y > 0:
+        priors.append((x, y-1))
+
+    return priors
+
+assert prior_positions(0, 0, grid_dimension=20) == []
+assert prior_positions(0, 1, grid_dimension=20) == prior_positions(1, 0, grid_dimension=20) == [(0,0)]
+assert prior_positions(1, 1, grid_dimension=20) == [(0,1), (1,0)]
+
+def set_grid_value(value, x, y, grid):
+    """Abstraction for setting the values of an (x,y) coordinate on the grid"""
+    assert 0 <= x < len(grid)
+    assert 0 <= y < len(grid)
+    grid[x][y] = value
+
+def get_grid_value(x, y, grid):
+    """Abstraction for returning the value of an (x,y) coordinate on the grid"""
+    assert 0 <= x < len(grid)
+    assert 0 <= y < len(grid)
+    return grid[x][y]
+
+def lattice_paths_grid(grid_dimension):
+    """Given a grid dimension, determines the number of possible routes from the top left corner to the bottom right corner only being able to move right and down
+
+    Grid Approach
+    Note: From any position on the grid, the number of paths to that position is the sum of the number of paths of the two positions that can lead to that position
+    """
+    # Example given in problem description walks along *edges* so this must be simulated with a grid of with dimension+1
+    real_grid_dimension = grid_dimension + 1
+    grid = generate_grid(real_grid_dimension)
+
+    # Starting Path
+    set_grid_value(value=1, x=0, y=0, grid=grid)
+
+    for x in range(real_grid_dimension):
+        for y in range(real_grid_dimension):
+            priors = prior_positions(x, y, real_grid_dimension)
+
+            total_paths = 0
+            for prior in priors:
+                total_paths += get_grid_value(x=prior[0], y=prior[1], grid=grid)
+
+            if total_paths != 0:
+                set_grid_value(value=total_paths, x=x, y=y, grid=grid)
+
+    return int(get_grid_value(x=grid_dimension, y=grid_dimension, grid=grid))
+
+def lattice_paths_combinatorics(grid_dimension):
+    """Given a grid dimension, determines the number of possible routes from the top left corner to the bottom right corner only being able to move right and down
+
+    Combinatorics Approach
+    Note: At any point, there are two possible choices, except in the special cases in which you are at the rightmost or downmost edge
+    Note: These special cases are only possible AFTER grid_dimension moves have been made
+    Note: The total number of moves that can be made sum to grid_dimension * 2
+    Reframe: This is an identical situation to there being a deck of 20 moves or cards, 10 A's and 10 B's, and you sampling 20 times from that deck without replacement.
+    What is the total number of possible orderings? => 20 choose 10
+    """
+    from scipy.special import comb
+    return int(comb(N=int(grid_dimension*2), k=grid_dimension))
+
+assert lattice_paths_grid(2) == lattice_paths_combinatorics(2) == 6
+assert lattice_paths_grid(20) == lattice_paths_combinatorics(20)
+
+lattice_paths_grid(20)
+
+################################################################################
+# 16
 ################################################################################
