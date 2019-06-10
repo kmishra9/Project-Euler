@@ -587,7 +587,7 @@ def set_grid_value(value, x, y, grid):
 def get_grid_value(x, y, grid):
     """Abstraction for returning the value of an (x,y) coordinate on the grid"""
     assert 0 <= x < len(grid)
-    assert 0 <= y < len(grid)
+    assert 0 <= y < len(grid[x])
     return grid[x][y]
 
 def lattice_paths_grid(grid_dimension):
@@ -636,4 +636,133 @@ lattice_paths_grid(20)
 
 ################################################################################
 # 16
+################################################################################
+
+def power_digit_sum(base, exponent):
+    """Returns the sum of the digits of the number that is equal to the base to the power of the exponent"""
+    return sum([int(digit) for digit in str(base ** exponent)])
+
+assert power_digit_sum(base=2, exponent=3) == 2**3
+assert power_digit_sum(base=2, exponent=4) == 1+6
+assert power_digit_sum(base=10, exponent=2) == 1
+
+power_digit_sum(base=2, exponent=1000)
+
+################################################################################
+# 17
+################################################################################
+
+def number_letter_counts(start_num, end_num):
+    """Returns the number of letters used to write out numbers start_num through end_num in words, inclusive"""
+    assert type(start_num) == type(end_num) == int
+    from num2words import num2words
+
+    nums = range(start_num, end_num+1)
+    words = [num2words(num) for num in nums]
+
+    return len("".join(words).replace("-", "").replace(" ", ""))
+
+assert number_letter_counts(start_num=1, end_num=1) == len("one")
+assert number_letter_counts(start_num=1, end_num=2) == len("one"+"two")
+assert number_letter_counts(start_num=1, end_num=500) == number_letter_counts(start_num=1, end_num=499) + len("fivehundred")
+
+
+number_letter_counts(start_num=1, end_num=1000)
+
+################################################################################
+# 18
+################################################################################
+
+def generate_triangle(triangle_string):
+    """Given a triangle string with \n seperated rows and \t seperated columns, generates and returns a 2D list of integers representing the triangle"""
+    rows = triangle_string.split("\n")
+    return [[int(num) for num in row.split()] for row in rows if len(row) > 0]
+
+test_triangle_string = "1\n2\t3\n4\t5\t6"
+test_triangle_grid = generate_triangle(test_triangle_string)
+assert test_triangle_grid == [[1], [2, 3], [4, 5, 6]]
+
+def get_next_possible_coordinates(grid, x, y, x_reach=[0, 1], y_reach=[1]):
+    """Returns a list of (x,y) coordinates that are reachable from (x,y) on grid given the reach constraints. Conceptually defaults to 'down' and 'directly adjacent' from the given (x,y) coordinate on the grid. Returns an empty list if no other coordinates are reachable"""
+    assert type(x) == type(y) == int
+    assert type(x_reach) == type(y_reach) == type(grid) == list
+    assert 0 <= y < len(grid) and 0 <= x < len(grid[y])
+
+    next_possible_coordinates = []
+
+    for x_change in x_reach:
+        for y_change in y_reach:
+            next_possible_coordinate_x = x + x_change
+            next_possible_coordinate_y = y + y_change
+            if not (0 <= next_possible_coordinate_y < len(grid)):
+                continue
+            elif not (0 <= next_possible_coordinate_x < len(grid[next_possible_coordinate_y])):
+                break
+            else:
+                next_possible_coordinates.append((next_possible_coordinate_x, next_possible_coordinate_y))
+
+    return next_possible_coordinates
+
+assert get_next_possible_coordinates(grid=test_triangle_grid, x=0, y=0) == [(0, 1), (1, 1)]
+assert get_next_possible_coordinates(grid=test_triangle_grid, x=0, y=2) == []
+assert get_next_possible_coordinates(grid=test_triangle_grid, x=2, y=2) == []
+
+def maximum_path_sum(triangle_string):
+    """Given a triangle string, with \n seperated rows and \t seperated columns, returns a tuple containing the maximum path sum and a list of the order of the maximum path)"""
+    triangle_grid = generate_triangle(triangle_string)
+    num_rows = len(triangle_grid)
+    top_of_triangle_grid = (0, 0)
+
+    # Populate memoize_dict with each coordinate
+    # Memoize dict stores (k=coordinate, v=[most_optimal_next_coordinate, sum_of_most_optimal_path_from_this_coordinate]) pairs
+    memoize_dict = {}
+    for row_index in range(num_rows-1, 0-1, -1):
+        row = triangle_grid[row_index]
+        for column_index in range(len(row)):
+            # Generalized grid access using (x,y) is conceptually reversed with triangle grids
+            current_coordinate = (column_index, row_index)
+            current_coordinate_value = get_grid_value(x=row_index, y=column_index, grid=triangle_grid)
+
+            next_possible_coordinates = get_next_possible_coordinates(grid=triangle_grid, x=column_index, y=row_index)
+
+            optimal_next_coordinate = None
+            optimal_next_value = 0
+
+            for next_possible_coordinate in next_possible_coordinates:
+
+                if next_possible_coordinate in memoize_dict:
+                    possible_optimal_next_value = memoize_dict[next_possible_coordinate][1]
+                else:
+                    # Generalized grid access using (x,y) is conceptually reversed with triangle grids
+                    possible_optimal_next_value = get_grid_value(x=next_possible_coordinate[1], y=next_possible_coordinate[0])
+
+                if optimal_next_value < possible_optimal_next_value:
+                    optimal_next_value = possible_optimal_next_value
+                    optimal_next_coordinate = next_possible_coordinate
+
+            # Memoize what has been determined to be the optimal next coordinate and the maximum path sum onwards from the current coordinate
+            memoize_dict[current_coordinate] = (optimal_next_coordinate, current_coordinate_value + optimal_next_value)
+
+    # Compute the optimal path and its sum starting from the top of the triangle using the memoize_dict
+    next_coordinate_of_optimal_path, optimal_path_sum = memoize_dict[top_of_triangle_grid]
+    # Generalized grid access using (x,y) is conceptually reversed with triangle grids
+    optimal_path = [get_grid_value(x=top_of_triangle_grid[1], y=top_of_triangle_grid[0], grid=triangle_grid)]
+    while next_coordinate_of_optimal_path is not None:
+        optimal_path.append(get_grid_value(x=next_coordinate_of_optimal_path[1], y=next_coordinate_of_optimal_path[0], grid=triangle_grid))
+        next_coordinate_of_optimal_path = memoize_dict[next_coordinate_of_optimal_path][0]
+
+    return (optimal_path, optimal_path_sum)
+
+# Loading large data strings
+with open("data/four_row_triangle.txt", "r") as triangle_file:
+    four_row_triangle_string = triangle_file.read()
+
+with open("data/fifteen_row_triangle.txt", "r") as triangle_file:
+    fifteen_row_triangle_string = triangle_file.read()
+
+assert maximum_path_sum(four_row_triangle_string) == ([3, 7, 4, 9], 23)
+maximum_path_sum(fifteen_row_triangle_string)
+
+################################################################################
+# 19
 ################################################################################
