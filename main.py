@@ -8,6 +8,7 @@ import os
 import itertools
 import numpy as np
 import scipy as sp
+from datetime import *
 os.chdir("/Users/kunalmishra/Project-Euler/")
 
 ################################################################################
@@ -767,7 +768,7 @@ maximum_path_sum(fifteen_row_triangle_string)
 # 19
 ################################################################################
 
-def is_leap_year(year):
+def is_leap_year(year: int) -> bool:
     return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
 
 assert is_leap_year(4) == True
@@ -775,10 +776,10 @@ assert is_leap_year(5) == False
 assert is_leap_year(500) == False
 assert is_leap_year(800) == True
 
-def get_num_days_in_month(month, year):
-    """@arg month : an integer between 1 and 12, mapping to the month of the year
-       @arg year : the year in which the month occurs
-       @return : Returns the the number of days that occur in that month
+def get_num_days_in_month(month: int, year: int) -> int:
+    """@param month : an integer between 1 and 12, mapping to the month of the year
+       @param year : the year in which the month occurs
+       @return : Returns an integer, the the number of days that occur in that month
     """
     month_days = {
         1 : 31,
@@ -800,14 +801,16 @@ def get_num_days_in_month(month, year):
 
     return month_days[month]
 
-def counting_sundays(reference_day, reference_date, start_date, end_date):
-    """@arg reference_day : an integer between 0 and 6, mapping to a particular day of the week
-       @arg reference_date : the
-       @arg start_date : the date when counting should begin, inclusive
-       @arg end_date : the date when counting should conclude, inclusive
+def counting_sundays(reference_day: int, reference_date: date, start_date: date, end_date: date) -> int:
+    """@param reference_day : an integer between 0 and 6, mapping to a particular day of the week, which the problem offers as a reference
+       @param reference_date : a date object, representing the date, which the problem offers as a reference -- must be the start of the month
+       @param start_date : the date when counting should begin, inclusive
+       @param end_date : the date when counting should conclude, inclusive
        @return : the number of Sundays that fall on the first day of a month
     """
-    assert start_date <= end_date
+    assert 0 <= reference_day <= 6
+    assert reference_date <= start_date <= end_date
+    assert reference_date.day == 1
     days = {
         0 : "Sunday",
         1 : "Monday",
@@ -819,12 +822,32 @@ def counting_sundays(reference_day, reference_date, start_date, end_date):
     }
 
     # Define reference position
-    current_date = 1
-    current_day = reference_day
+    current_date: date = reference_date
+    current_month: int = current_date
+    current_day: int = reference_day
+    total_sundays: int = 0
+    pre_start_sundays: int = 0
+
+    # Count all Sundays at start of months, starting at reference_date to end_date
+    while current_date < end_date:
+        # The current date should always be the start of the month
+        assert current_date.day == 1
+
+        is_sunday =
+        if is_sunday:
+            total_sundays += 1
+
+        if current_date < start_date:
+            pre_start_sundays += 1
 
     # Move to start_date
-    days_offset = (start_date - current_date) % 7
+    days_offset = (start_date - current_date).days % 7
     current_date = start_date
     current_day = (current_day + days_offset) % 7
 
-    # TODO: see docs for Date class https://docs.python.org/2/library/datetime.html#date-objects 
+type(date(2019, 10, 5) + timedelta(days=1))
+(date(2019, 10, 5) + timedelta(days=1)).year
+
+################################################################################
+# 20
+################################################################################
