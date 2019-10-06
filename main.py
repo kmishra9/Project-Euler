@@ -9,6 +9,8 @@ import itertools
 import numpy as np
 import scipy as sp
 from datetime import *
+from typing import *
+from functools import reduce
 os.chdir("/Users/kunalmishra/Project-Euler/")
 
 ################################################################################
@@ -801,25 +803,51 @@ def get_num_days_in_month(month: int, year: int) -> int:
 
     return month_days[month]
 
+def advance_to_next_month(reference_day: int, reference_date: date, current_date: date) -> Tuple[int, date]:
+    """@param reference_day: an integer between 0 and 6, mapping to a particular day of the week, which the problem offers as a reference
+       @param reference_date: the date, which the problem offers as a reference -- must be the start of the month
+       @param current_date: the current date -- must be the start of the month
+       @return: a tuple containing a new current_day and a new
+    """
+    assert 0 <= reference_day <= 6
+    assert reference_date <= current_date
+    assert current_date.day == 1
+
+    new_current_date = current_date + timedelta(days=get_num_days_in_month(month = current_date.month, year = current_date.year))
+    days_offset = (new_current_date - reference_date).days
+    new_current_day = (reference_day + days_offset ) % 7
+
+    return (new_current_day, new_current_date)
+
+assert advance_to_next_month(reference_day = 1, reference_date = date(year = 1900, month = 1, day = 1), current_date=date(year = 2019, month = 9, day = 1)) == (2, date(year = 2019, month = 10, day = 1))
+
+assert advance_to_next_month(reference_day = 1, reference_date = date(year = 1900, month = 1, day = 1), current_date=date(year = 2019, month = 10, day = 1)) == (5, date(year = 2019, month = 11, day = 1))
+
+def is_sunday(day: int, sunday: int = 0) -> bool:
+    """@param day: an integer between 0 and 6, mapping to a particular day of the week
+       @return: a boolean indicating whether the given day is a sunday or not
+    """
+    return day == sunday
+
 def counting_sundays(reference_day: int, reference_date: date, start_date: date, end_date: date) -> int:
-    """@param reference_day : an integer between 0 and 6, mapping to a particular day of the week, which the problem offers as a reference
-       @param reference_date : a date object, representing the date, which the problem offers as a reference -- must be the start of the month
-       @param start_date : the date when counting should begin, inclusive
-       @param end_date : the date when counting should conclude, inclusive
-       @return : the number of Sundays that fall on the first day of a month
+    """@param reference_day: an integer between 0 and 6, mapping to a particular day of the week, which the problem offers as a reference
+       @param reference_date: the date, which the problem offers as a reference -- must be the start of the month
+       @param start_date: the date when counting should begin, inclusive
+       @param end_date: the date when counting should conclude, inclusive
+       @note day_map: days = {
+           0 : "Sunday",
+           1 : "Monday",
+           2 : "Tuesday",
+           3 : "Wednesday",
+           4 : "Thursday",
+           5 : "Friday",
+           6 : "Saturday"
+       }
+       @return: the number of Sundays that fall on the first day of a month
     """
     assert 0 <= reference_day <= 6
     assert reference_date <= start_date <= end_date
     assert reference_date.day == 1
-    days = {
-        0 : "Sunday",
-        1 : "Monday",
-        2 : "Tuesday",
-        3 : "Wednesday",
-        4 : "Thursday",
-        5 : "Friday",
-        6 : "Saturday"
-    }
 
     # Define reference position
     current_date: date = reference_date
@@ -828,26 +856,50 @@ def counting_sundays(reference_day: int, reference_date: date, start_date: date,
     total_sundays: int = 0
     pre_start_sundays: int = 0
 
-    # Count all Sundays at start of months, starting at reference_date to end_date
+    # Count all Sundays between start_date and end_date
     while current_date < end_date:
-        # The current date should always be the start of the month
         assert current_date.day == 1
+        total_sundays += int(is_sunday(day = current_day)) * int(start_date <= current_date <= end_date)
 
-        is_sunday =
-        if is_sunday:
-            total_sundays += 1
+        # Move to next month
+        current_day, current_date = advance_to_next_month(
+            reference_day = reference_day,
+            reference_date = reference_date,
+            current_date = current_date
+        )
 
-        if current_date < start_date:
-            pre_start_sundays += 1
+    return total_sundays
 
-    # Move to start_date
-    days_offset = (start_date - current_date).days % 7
-    current_date = start_date
-    current_day = (current_day + days_offset) % 7
-
-type(date(2019, 10, 5) + timedelta(days=1))
-(date(2019, 10, 5) + timedelta(days=1)).year
+counting_sundays(reference_day = 1, reference_date = date(year = 1900, month = 1, day = 1), start_date = date(year = 1901, month = 1, day = 1), end_date = date(year = 2000, month = 12, day = 31))
 
 ################################################################################
 # 20
 ################################################################################
+
+def string_slice_sum(string_slice: str) -> int:
+    """Returns the sum of the individual single-digit numbers contained within the string_slice"""
+    return sum([int(character) for character in string_slice])
+
+assert string_slice_sum(string_slice = "123") == 1 + 2 + 3
+assert string_slice_sum(string_slice = "000") == 0
+
+def factorial(n: int) -> int:
+    """@param n: an integer, from which to generate n!
+       @return: an integer, representing the factorial of n
+    """
+    # if n == 0:
+    #     return 1
+    return reduce(lambda x,y: x*y, [i for i in range(1, n+1)], 1)
+
+assert factorial(n = 0) == 1
+assert factorial(n = 1) == 1
+assert factorial(n = 2) == 2*1
+assert factorial(n = 100) == factorial(99) * 100
+
+def factorial_digit_sum(n: int) -> int:
+    """@param n: an integer, from which to generate n! and determine the sum of digits of
+       @return: an integer, representing the digit sum of the factorial of n
+    """
+    return string_slice_sum(string_slice = str(factorial(n = n)))
+
+factorial_digit_sum(n = 100)
