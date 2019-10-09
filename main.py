@@ -907,10 +907,16 @@ factorial_digit_sum(n = 100)
 # 21
 ################################################################################
 
+def proper_divisors(n: int) -> Set:
+    """Returns all the proper divisors of n (excluding n itself)"""
+    divisors = factorization(n = n)
+    divisors.remove(n)
+    return divisors
+
 def sum_amicable_numbers(n: int) -> int:
     """Returns the sum of all amicable numbers less than the integer, n"""
-    factors = {i : factorization(i) for i in range(2, n+1)}
-    proper_divisor_sum = {i : (sum(factors[i]) - i) for i in factors.keys()}
+    factors = {i : proper_divisors(i) for i in range(2, n+1)}
+    proper_divisor_sum = {i : (sum(factors[i])) for i in factors.keys()}
     assert proper_divisor_sum[220] == 284 and proper_divisor_sum[284] == 220
     amicable_numbers = {i : proper_divisor_sum.get(proper_divisor_sum[i]) == i and proper_divisor_sum[i] != i for i in proper_divisor_sum.keys()}
     assert amicable_numbers[220] == True and amicable_numbers[284] == True
@@ -953,4 +959,35 @@ names_scores()
 
 ################################################################################
 # 23
+################################################################################
+
+def is_abundant(n: int) -> bool:
+    return sum(proper_divisors(n)) > n
+
+assert is_abundant(12)
+
+def get_abundant_numbers(n: int = 28123) -> Set:
+    """Returns a set of all abundant numbers less than n"""
+    return {i for i in range(12, n) if is_abundant(i)}
+
+def all_sums_of_two_abundants(abundant_numbers: Set) -> Set:
+    """Returns a set of all possible sums from two abundant numbers"""
+    all_sums = set()
+    for i in abundant_numbers:
+        for j in abundant_numbers:
+            all_sums.add(i+j)
+    return all_sums
+
+def non_abundant_sums() -> int:
+    """Returns the sum of all the positive integers which cannot be written as the sum of two abundant numbers"""
+    n = 28123
+    abundant_numbers = get_abundant_numbers(n)
+    abundant_number_sums = all_sums_of_two_abundants(abundant_numbers)
+    assert n+1 in abundant_number_sums
+    return sum([i for i in range(n) if i not in abundant_number_sums])
+
+non_abundant_sums()
+
+################################################################################
+# 24
 ################################################################################
