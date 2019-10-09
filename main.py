@@ -917,3 +917,36 @@ def sum_amicable_numbers(n: int) -> int:
     return sum([i for i in amicable_numbers.keys() if amicable_numbers[i] == True])
 
 sum_amicable_numbers(n = 10000)
+
+################################################################################
+# 22
+################################################################################
+
+def get_letter_score(letter: str) -> int:
+    """Returns the alphabetical score of a letter. Example: 'A' is 1 and 'C' is 3"""
+    assert type(letter) == str and len(letter) == 1
+    letter = letter.lower()
+    letter_string = "abcdefghijklmnopqrstuvwxyz"
+    assert letter in letter_string
+    letters = [letter for letter in letter_string]
+    letter_scores = {letter : score for score, letter in enumerate(letters, start=1)}
+    return letter_scores[letter]
+
+assert get_letter_score(letter = 'a') == 1
+assert get_letter_score(letter = 'z') == 26
+
+def get_name_score(name: str) -> int:
+    """Returns the alphabetical score of a name. Example: 'COLIN' is 3 + 15 + 12 + 9 + 14 = 53"""
+    return sum([get_letter_score(letter = letter) for letter in name])
+
+assert get_name_score(name = "COLIN") == 53
+
+def names_scores():
+    """Returns the sum of the name scores in the names.txt, where a name score is defined as the multiple of the alphabetically sorted position """
+    # Load and clean data
+    with open("data/names.txt", "r") as names_file:
+        names = sorted(names_file.read().replace('"', '').lower().split(","))
+
+    return sum([index * get_name_score(name = name) for index, name in enumerate(names, start=1)])
+
+names_scores()
