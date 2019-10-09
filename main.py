@@ -912,7 +912,7 @@ def sum_amicable_numbers(n: int) -> int:
     factors = {i : factorization(i) for i in range(2, n+1)}
     proper_divisor_sum = {i : (sum(factors[i]) - i) for i in factors.keys()}
     assert proper_divisor_sum[220] == 284 and proper_divisor_sum[284] == 220
-    amicable_numbers = {i : True if proper_divisor_sum.get(proper_divisor_sum[i]) == i else False for i in proper_divisor_sum.keys()}
+    amicable_numbers = {i : True if proper_divisor_sum.get(proper_divisor_sum[i]) == i and proper_divisor_sum[i] != i else False for i in proper_divisor_sum.keys()}
     assert amicable_numbers[220] == True and amicable_numbers[284] == True
     return sum([i for i in amicable_numbers.keys() if amicable_numbers[i] == True])
 
