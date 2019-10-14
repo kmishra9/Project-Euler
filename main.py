@@ -1009,7 +1009,7 @@ lexicographic_permutations(n = 1000000, digits = [str(i) for i in range(10)])
 # 25
 ################################################################################
 
-def n_digit_fibonacci_number(first: int = 0, second: int = 1, index: int = 0, digit_threshold: int = 1000):
+def n_digit_fibonacci_number(first: int = 0, second: int = 1, index: int = 0, digit_threshold: int = 1000) -> int:
     """Returns the index of the first fibonacci number to have digit_threshold number of digits"""
     index = 0
     while len(str(first)) < digit_threshold:
@@ -1018,7 +1018,45 @@ def n_digit_fibonacci_number(first: int = 0, second: int = 1, index: int = 0, di
 
     return index
 
-
 assert n_digit_fibonacci_number(digit_threshold=3) == 12
 
 n_digit_fibonacci_number()
+
+################################################################################
+# 26
+################################################################################
+def contains_repeat(digits: str) -> bool:
+    """Returns whether the string of digits supplied contains a cycle (first half is equal to last half)"""
+    return digits[:len(digits)//2] == digits [len(digits)//2:] and len(digits) > 0
+
+assert not contains_repeat(digits = "123456")
+assert not contains_repeat(digits = "1234561234567")
+assert not contains_repeat(digits = "1234567123456")
+assert contains_repeat(digits = "123456123456")
+assert not contains_repeat(digits = "")
+
+def get_cycle_length(n: int, d: int, timeout: int = 1000) -> int:
+    """Returns the length of the recurring cycle in the number n / d, where d > n"""
+    divisor = ""
+    perfectly_divisible = n % d == 0
+    while not perfectly_divisible and not contains_repeat(digits = divisor) and timeout > 0:
+        divisor += str(10*n // d)
+        n = (10*n) % d
+        perfectly_divisible = n == 0
+        timeout -= 1
+
+    print("." + divisor)
+    if contains_repeat(digits = divisor):
+        assert len(divisor) % 2 == 0
+        return len(divisor) // 2
+
+    return 0
+
+assert get_cycle_length(n = 1, d = 2) == 0
+assert get_cycle_length(n = 1, d = 3) == 1
+assert get_cycle_length(n = 1, d = 6) == 1                                      # TODO: Currently breaking -- fix contains_repeat to be more general and handle trailing repeats
+assert get_cycle_length(n = 1, d = 7) == 6
+
+
+def reciprocal_cycles(n: int = 1000) -> int:
+    """Returns the value d for which 1/d contains the longest recurring cycle in its decimal fraction part, and for which d < n"""
