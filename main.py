@@ -978,9 +978,8 @@ def all_sums_of_two_abundants(abundant_numbers: Set) -> Set:
             all_sums.add(i+j)
     return all_sums
 
-def non_abundant_sums() -> int:
-    """Returns the sum of all the positive integers which cannot be written as the sum of two abundant numbers"""
-    n = 28123
+def non_abundant_sums(n = 28123) -> int:
+    """Returns the sum of all the positive integers which cannot be written as the sum of two abundant numbers less than n"""
     abundant_numbers = get_abundant_numbers(n)
     abundant_number_sums = all_sums_of_two_abundants(abundant_numbers)
     assert n+1 in abundant_number_sums
@@ -991,3 +990,17 @@ non_abundant_sums()
 ################################################################################
 # 24
 ################################################################################
+
+def lexicographic_permutations(n: int, digits: List[str]) -> str:
+    """Returns the nth lexicographic (ordered numerically) permutation of the supplied digits"""
+    all_permutations = itertools.permutations(digits)
+    sorted_permutations = sorted([''.join(permutation) for permutation in all_permutations], key=lambda x: int(x))
+    return str(sorted_permutations[n-1])
+
+assert(lexicographic_permutations(n = 1, digits = ["0", "1", "2"]) == "012")
+assert(lexicographic_permutations(n = 3, digits = ["0", "1", "2"]) == "102")
+assert(lexicographic_permutations(n = 6, digits = ["0", "1", "2"]) == "210")
+assert(lexicographic_permutations(n = 3, digits = ["1", "0", "2"]) == "102")
+assert(lexicographic_permutations(n = 6, digits = ["2", "1", "0"]) == "210")
+
+lexicographic_permutations(n = 1000000, digits = [str(i) for i in range(10)])
