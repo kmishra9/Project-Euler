@@ -997,10 +997,28 @@ def lexicographic_permutations(n: int, digits: List[str]) -> str:
     sorted_permutations = sorted([''.join(permutation) for permutation in all_permutations], key=lambda x: int(x))
     return str(sorted_permutations[n-1])
 
-assert(lexicographic_permutations(n = 1, digits = ["0", "1", "2"]) == "012")
-assert(lexicographic_permutations(n = 3, digits = ["0", "1", "2"]) == "102")
-assert(lexicographic_permutations(n = 6, digits = ["0", "1", "2"]) == "210")
-assert(lexicographic_permutations(n = 3, digits = ["1", "0", "2"]) == "102")
-assert(lexicographic_permutations(n = 6, digits = ["2", "1", "0"]) == "210")
+assert lexicographic_permutations(n = 1, digits = ["0", "1", "2"]) == "012"
+assert lexicographic_permutations(n = 3, digits = ["0", "1", "2"]) == "102"
+assert lexicographic_permutations(n = 6, digits = ["0", "1", "2"]) == "210"
+assert lexicographic_permutations(n = 3, digits = ["1", "0", "2"]) == "102"
+assert lexicographic_permutations(n = 6, digits = ["2", "1", "0"]) == "210"
 
 lexicographic_permutations(n = 1000000, digits = [str(i) for i in range(10)])
+
+################################################################################
+# 25
+################################################################################
+
+def n_digit_fibonacci_number(first: int = 0, second: int = 1, index: int = 0, digit_threshold: int = 1000):
+    """Returns the index of the first fibonacci number to have digit_threshold number of digits"""
+    index = 0
+    while len(str(first)) < digit_threshold:
+        first, second = second, first+second
+        index += 1
+
+    return index
+
+
+assert n_digit_fibonacci_number(digit_threshold=3) == 12
+
+n_digit_fibonacci_number()
