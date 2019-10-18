@@ -1025,38 +1025,71 @@ n_digit_fibonacci_number()
 ################################################################################
 # 26
 ################################################################################
-def contains_repeat(digits: str) -> bool:
-    """Returns whether the string of digits supplied contains a cycle (first half is equal to last half)"""
-    return digits[:len(digits)//2] == digits [len(digits)//2:] and len(digits) > 0
 
-assert not contains_repeat(digits = "123456")
-assert not contains_repeat(digits = "1234561234567")
-assert not contains_repeat(digits = "1234567123456")
-assert contains_repeat(digits = "123456123456")
-assert not contains_repeat(digits = "")
+def get_cycle(digits: str, minimum_cycles: int = 3) -> Optional[str] :
+    """Returns a cycle if one is supplied in digits, repeated at least minimum_cycles number of times"""
+    patterns = []
+    for i in range(len(digits)):
+        pattern = []
+        for j in range(len(digits)):
+            pattern.append(digits[i:i+j+1])
+        patterns.append(pattern)
 
-def get_cycle_length(n: int, d: int, timeout: int = 1000) -> int:
-    """Returns the length of the recurring cycle in the number n / d, where d > n"""
+    # Iterate through all possible lexical orderings of variable length from each position in digits and check if any resemble a cycle
+    found_cycle = None
+    starting_at_index = 0
+    possible_cycles = [[(digits[:len(digits)//2] == digits[len(digits)//2:], digits) for digits in pattern] for pattern in patterns]
+    for lst in possible_cycles:
+        for (pattern_exists, possible_cycle) in lst:
+            if pattern_exists:
+                found_cycle = possible_cycle[:len(possible_cycle)//2]
+                break
+
+        if found_cycle is not None:
+            break
+
+        starting_at_index += 1
+
+    # After splitting digits by the found_cycle, all trailing splits should be empty strings, as well as uninterrupted, to be truly cyclical
+    # Note the edge case that the final cycle in digits is "cut off" too early -- but should still match the beginning of the found_cycle
+    split_digits = [split_string == '' for split_string in digits.split(found_cycle)]
+    num_cycles = sum(split_digits)
+    uninterrupted_cycle = all(split_digits[starting_at_index:])
+
+    if num_cycles >= minimum_cycles and uninterrupted_cycle:
+        return found_cycle
+    return None
+
+assert get_cycle(digits = "") == None
+assert get_cycle(digits = "123456") == None
+assert get_cycle(digits = "123456123456", minimum_cycles = 2) == "123456"
+assert get_cycle(digits = "1234561234567", minimum_cycles = 2) == None
+assert get_cycle(digits = "123456123456123", minimum_cycles = 2) == "123456"
+assert get_cycle(digits = "1666666", minimum_cycles = 2) == "6"
+assert get_cycle(digits = "1666666", minimum_cycles = 7) == None
+
+def divide(n: int, d: int, timeout = 50) -> str:
+    """Returns the long division decimal of n / d to a maximum of timeout decimal places"""
+    decimal_point_index_from_right = 0
     divisor = ""
-    perfectly_divisible = n % d == 0
-    while not perfectly_divisible and not contains_repeat(digits = divisor) and timeout > 0:
-        divisor += str(10*n // d)
-        n = (10*n) % d
-        perfectly_divisible = n == 0
+
+    while n > 0 and timeout > 0:
+        if n < d:
+            n *= 10
+            decimal_point_index_from_right += 1
+
+        divisor += str(n // d)
+        n = n % d
         timeout -= 1
 
-    print("." + divisor)
-    if contains_repeat(digits = divisor):
-        assert len(divisor) % 2 == 0
-        return len(divisor) // 2
+    return divisor[:-1*decimal_point_index_from_right] + "." + divisor[-1*decimal_point_index_from_right:]
 
-    return 0
-
-assert get_cycle_length(n = 1, d = 2) == 0
-assert get_cycle_length(n = 1, d = 3) == 1
-assert get_cycle_length(n = 1, d = 6) == 1                                      # TODO: Currently breaking -- fix contains_repeat to be more general and handle trailing repeats
-assert get_cycle_length(n = 1, d = 7) == 6
+assert divide(n = 1, d = 2, timeout = 3)  == '.5'
+assert divide(n = 1, d = 3, timeout = 3)  == '.333'
+assert divide(n = 1, d = 3, timeout = 50) == '.' + '3' * 50
+assert divide(n = 1, d = 7, timeout = 42) == '.' + '142857' * 7
+assert divide(n = 1, d = 8, timeout = 50) == '.125'
 
 
 def reciprocal_cycles(n: int = 1000) -> int:
-    """Returns the value d for which 1/d contains the longest recurring cycle in its decimal fraction part, and for which d < n"""
+    """Returns the value d for which 1 / d contains the longest recurring cycle in its decimal fraction part, and for which d < n"""
