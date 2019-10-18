@@ -1026,7 +1026,7 @@ n_digit_fibonacci_number()
 # 26
 ################################################################################
 
-def get_cycle(digits: str, minimum_cycles: int = 3) -> Optional[str] :
+def get_cycle(digits: str, minimum_cycles: int = 1) -> Optional[str] :
     """Returns a cycle if one is supplied in digits, repeated at least minimum_cycles number of times"""
     patterns = []
     for i in range(len(digits)):
@@ -1054,7 +1054,13 @@ def get_cycle(digits: str, minimum_cycles: int = 3) -> Optional[str] :
     # Note the edge case that the final cycle in digits is "cut off" too early -- but should still match the beginning of the found_cycle
     split_digits = [split_string == '' for split_string in digits.split(found_cycle)]
     num_cycles = sum(split_digits)
-    uninterrupted_cycle = all(split_digits[starting_at_index:])
+    uninterrupted_cycle = (
+        all(split_digits[starting_at_index:]) or
+        (all(split_digits[starting_at_index:-1]) and
+         found_cycle is not None and
+         digits.split(found_cycle)[-1] == found_cycle[:len(digits.split(found_cycle)[-1])]
+        )
+    )
 
     if num_cycles >= minimum_cycles and uninterrupted_cycle:
         return found_cycle
@@ -1068,7 +1074,7 @@ assert get_cycle(digits = "123456123456123", minimum_cycles = 2) == "123456"
 assert get_cycle(digits = "1666666", minimum_cycles = 2) == "6"
 assert get_cycle(digits = "1666666", minimum_cycles = 7) == None
 
-def divide(n: int, d: int, timeout = 50) -> str:
+def divide(n: int, d: int, timeout = 200) -> str:
     """Returns the long division decimal of n / d to a maximum of timeout decimal places"""
     decimal_point_index_from_right = 0
     divisor = ""
@@ -1091,5 +1097,20 @@ assert divide(n = 1, d = 7, timeout = 42) == '.' + '142857' * 7
 assert divide(n = 1, d = 8, timeout = 50) == '.125'
 
 
-def reciprocal_cycles(n: int = 1000) -> int:
-    """Returns the value d for which 1 / d contains the longest recurring cycle in its decimal fraction part, and for which d < n"""
+def reciprocal_cycles(start: int = 2, stop: int = 1000, timeout = 200) -> Dict:
+    """Returns the value d for which 1 / d contains the longest recurring cycle in its decimal fraction part, and for which start < d < stop, alongside the longest recurring cycle"""
+    return max([{"d":i, "cycle":get_cycle(digits = divide(n = 1, d = i, timeout = timeout))} for i in range(start, stop)], key = lambda return_dict: len(return_dict["cycle"]) if return_dict["cycle"] is not None and return_dict.update({"cycle_length":len(return_dict["cycle"])}) == None else 0)
+
+assert reciprocal_cycles(stop = 5) == {'d': 3, 'cycle': '3', 'cycle_length': 1}
+assert reciprocal_cycles(stop = 10) == {'d': 7, 'cycle': '142857', 'cycle_length': 6}
+
+reciprocal_cycles(start = 2, stop = 250, timeout = 500)
+reciprocal_cycles(start = 250, stop = 500, timeout = 500)
+reciprocal_cycles(start = 500, stop = 750, timeout = 500)
+reciprocal_cycles(start = 750, stop = 999, timeout = 500)
+
+
+divide(n = 1, d = 17)
+
+# TODO: Struggling with efficiency, likely due to crazy n**4 runtime in get_cycle -- make more efficient so we can use larger timeouts
+# TODO: Why are there no cycles in any of the larger cohorts? 
