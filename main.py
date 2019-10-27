@@ -1026,7 +1026,7 @@ n_digit_fibonacci_number()
 # 26
 ################################################################################
 
-def get_cycle(digits: str, minimum_cycles: int = 1) -> Optional[str] :
+def get_cycle_inefficient(digits: str, minimum_cycles: int = 1) -> Optional[str]:
     """Returns a cycle if one is supplied in digits, repeated at least minimum_cycles number of times"""
     patterns = []
     for i in range(len(digits)):
@@ -1052,8 +1052,9 @@ def get_cycle(digits: str, minimum_cycles: int = 1) -> Optional[str] :
 
     # After splitting digits by the found_cycle, all trailing splits should be empty strings, as well as uninterrupted, to be truly cyclical
     # Note the edge case that the final cycle in digits is "cut off" too early -- but should still match the beginning of the found_cycle
+    # Note the edge case resulting from unusual .split() properties -> "33".split("3") -> ["", "", ""] and not ["", ""] vs ".33".split("3") -> [".", "", ""]))
     split_digits = [split_string == '' for split_string in digits.split(found_cycle)]
-    num_cycles = sum(split_digits)
+    num_cycles = sum(split_digits) - (1 if starting_at_index == 0 and len(split_digits) > 1 and split_digits[-1] else 0)
     uninterrupted_cycle = (
         all(split_digits[starting_at_index:]) or
         (all(split_digits[starting_at_index:-1]) and
@@ -1066,6 +1067,10 @@ def get_cycle(digits: str, minimum_cycles: int = 1) -> Optional[str] :
         return found_cycle
     return None
 
+def get_cycle(digits: str, minimum_cycles: int = 2) -> Optional[str]:
+    """Returns a cycle if one is supplied in digits, repeated at least minimum_cycles number of times"""
+
+
 assert get_cycle(digits = "") == None
 assert get_cycle(digits = "123456") == None
 assert get_cycle(digits = "123456123456", minimum_cycles = 2) == "123456"
@@ -1073,9 +1078,10 @@ assert get_cycle(digits = "1234561234567", minimum_cycles = 2) == None
 assert get_cycle(digits = "123456123456123", minimum_cycles = 2) == "123456"
 assert get_cycle(digits = "1666666", minimum_cycles = 2) == "6"
 assert get_cycle(digits = "1666666", minimum_cycles = 7) == None
+assert get_cycle(digits = "33", minimum_cycles = 3) == None
 
-def divide(n: int, d: int, timeout = 200) -> str:
-    """Returns the long division decimal of n / d to a maximum of timeout decimal places"""
+def divide(n: int, d: int, timeout = 200, cycle_cutoff = False, cycle_divisor_check_cadence = 100, minimum_cycles = 3) -> str:
+    """Returns the long division decimal of n / d. The length of the long division decimal is dictated by whether a cycle is detected a minimum number of times """
     decimal_point_index_from_right = 0
     divisor = ""
 
@@ -1087,15 +1093,20 @@ def divide(n: int, d: int, timeout = 200) -> str:
         divisor += str(n // d)
         n = n % d
         timeout -= 1
+        if cycle_cutoff and len(divisor) % cycle_divisor_check_cadence == 0 and get_cycle(digits = divisor, minimum_cycles = minimum_cycles) is not None:
+            break;
 
     return divisor[:-1*decimal_point_index_from_right] + "." + divisor[-1*decimal_point_index_from_right:]
 
 assert divide(n = 1, d = 2, timeout = 3)  == '.5'
-assert divide(n = 1, d = 3, timeout = 3)  == '.333'
-assert divide(n = 1, d = 3, timeout = 50) == '.' + '3' * 50
-assert divide(n = 1, d = 7, timeout = 42) == '.' + '142857' * 7
+assert divide(n = 1, d = 3, timeout = 3, cycle_cutoff = False)  == '.333'
+assert divide(n = 1, d = 3, timeout = 3, cycle_cutoff = True)  == '.333'
+assert divide(n = 1, d = 3, timeout = 50, cycle_cutoff= False) == '.' + '3' * 50
+assert divide(n = 1, d = 3, timeout = 50, cycle_cutoff= True, cycle_divisor_check_cadence=1) == '.333'
+assert divide(n = 1, d = 3, timeout = 50, cycle_cutoff= True, cycle_divisor_check_cadence=1, minimum_cycles = 2) == '.33'
+assert divide(n = 1, d = 7, timeout = 42, cycle_cutoff= False) == '.' + '142857' * 7
+assert divide(n = 1, d = 7, timeout = 42, cycle_cutoff= True, cycle_divisor_check_cadence=1) == '.' + '142857' * 3
 assert divide(n = 1, d = 8, timeout = 50) == '.125'
-
 
 def reciprocal_cycles(start: int = 2, stop: int = 1000, timeout = 200) -> Dict:
     """Returns the value d for which 1 / d contains the longest recurring cycle in its decimal fraction part, and for which start < d < stop, alongside the longest recurring cycle"""
@@ -1109,8 +1120,12 @@ reciprocal_cycles(start = 250, stop = 500, timeout = 500)
 reciprocal_cycles(start = 500, stop = 750, timeout = 500)
 reciprocal_cycles(start = 750, stop = 999, timeout = 500)
 
+x = [divide(n = 1, d = i, timeout = 1000, cycle_cutoff=True) for i in range(2, 1000)]
 
 divide(n = 1, d = 17)
+divide(n = 1, d = 97, timeout = 200)
 
 # TODO: Struggling with efficiency, likely due to crazy n**4 runtime in get_cycle -- make more efficient so we can use larger timeouts
-# TODO: Why are there no cycles in any of the larger cohorts? 
+# TODO: Why are there no cycles in any of the larger cohorts?
+
+'.01030927835051546391752577319587628865979381443298969072164948453608247422680412371134020618556701030927835051546391752577319587628865979381443298969072164948453608247422680412371134020618556701030927'
