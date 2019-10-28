@@ -1067,9 +1067,56 @@ def get_cycle_inefficient(digits: str, minimum_cycles: int = 1) -> Optional[str]
         return found_cycle
     return None
 
+def pattern_generator(digits: str) -> Generator:
+    """Generator function -- returns all forward-looking, variable-length patterns possible from digits and the starting_at_index (representing at which index the pattern begins from within digits)"""
+    for i in range(len(digits)):
+        for j in range(len(digits)):
+            if i+j+1 > len(digits): break
+            yield {"pattern" : digits[i:i+j+1], "starting_at_index" : i}
+
 def get_cycle(digits: str, minimum_cycles: int = 2) -> Optional[str]:
     """Returns a cycle if one is supplied in digits, repeated at least minimum_cycles number of times"""
+    patterns = pattern_generator(digits = digits)
+    found_cycle = None
 
+    # Find the cycle, if one exists
+    while not found_cycle:
+        next_pattern = next(patterns, None)
+
+        if not next_pattern:
+            return None
+        else:
+            possible_cycle, starting_at_index = next_pattern["pattern"], next_pattern["starting_at_index"]
+
+        if len(possible_cycle) % 2 != 0:
+            pass
+
+        first_half, second_half = possible_cycle[:len(possible_cycle)//2], possible_cycle[len(possible_cycle)//2:]
+        if first_half == second_half:
+            found_cycle = first_half
+
+            # Verify that found_cycle is valid (not interrupted)
+            # Note the edge case that the final cycle in digits is "cut off" too early -- but should still match the beginning of the found_cycle (i.e. "12312312")
+            split_digits = [split_string == '' for split_string in digits.split(found_cycle)]
+            uninterrupted_cycle = (
+                all(split_digits[starting_at_index:]) or
+                (all(split_digits[starting_at_index:-1]) and
+                 found_cycle is not None and
+                 digits.split(found_cycle)[-1] == found_cycle[:len(digits.split(found_cycle)[-1])]
+                )
+            )
+
+            # Verify that the cycle occurs at least minimum_digits number of times
+            num_cycles = sum(split_digits) - (1 if starting_at_index == 0 and len(split_digits) > 1 and split_digits[-1] else 0)
+
+            # If the cycle is valid, return, otherwise continue searching for a different cycle
+            # Note the edge case that .00990099 would find a cycle of 0 before finding the overall cycle 0099 without logic embedded within
+            if num_cycles >= minimum_cycles and uninterrupted_cycle:
+                return found_cycle
+            else:
+                found_cycle = None
+
+    return None
 
 assert get_cycle(digits = "") == None
 assert get_cycle(digits = "123456") == None
@@ -1079,8 +1126,9 @@ assert get_cycle(digits = "123456123456123", minimum_cycles = 2) == "123456"
 assert get_cycle(digits = "1666666", minimum_cycles = 2) == "6"
 assert get_cycle(digits = "1666666", minimum_cycles = 7) == None
 assert get_cycle(digits = "33", minimum_cycles = 3) == None
+assert get_cycle(digits = ".009900990099") == '0099'
 
-def divide(n: int, d: int, timeout = 200, cycle_cutoff = False, cycle_divisor_check_cadence = 100, minimum_cycles = 3) -> str:
+def divide(n: int, d: int, timeout = 200, cycle_cutoff = True, cycle_divisor_check_cadence = 100, minimum_cycles = 3) -> str:
     """Returns the long division decimal of n / d. The length of the long division decimal is dictated by whether a cycle is detected a minimum number of times """
     decimal_point_index_from_right = 0
     divisor = ""
@@ -1107,25 +1155,26 @@ assert divide(n = 1, d = 3, timeout = 50, cycle_cutoff= True, cycle_divisor_chec
 assert divide(n = 1, d = 7, timeout = 42, cycle_cutoff= False) == '.' + '142857' * 7
 assert divide(n = 1, d = 7, timeout = 42, cycle_cutoff= True, cycle_divisor_check_cadence=1) == '.' + '142857' * 3
 assert divide(n = 1, d = 8, timeout = 50) == '.125'
+assert divide(n = 1, d = 100) == '.01'
 
 def reciprocal_cycles(start: int = 2, stop: int = 1000, timeout = 200) -> Dict:
     """Returns the value d for which 1 / d contains the longest recurring cycle in its decimal fraction part, and for which start < d < stop, alongside the longest recurring cycle"""
-    return max([{"d":i, "cycle":get_cycle(digits = divide(n = 1, d = i, timeout = timeout))} for i in range(start, stop)], key = lambda return_dict: len(return_dict["cycle"]) if return_dict["cycle"] is not None and return_dict.update({"cycle_length":len(return_dict["cycle"])}) == None else 0)
+    all_cycles = [{
+        "d":i,
+        "cycle":get_cycle(digits = divide(n = 1, d = i, timeout = timeout))
+    } for i in range(start, stop) ]
+
+    return max(all_cycles, key = lambda return_dict: len(return_dict["cycle"]) if return_dict["cycle"] is not None and return_dict.update({"cycle_length":len(return_dict["cycle"])}) == None else 0)
 
 assert reciprocal_cycles(stop = 5) == {'d': 3, 'cycle': '3', 'cycle_length': 1}
 assert reciprocal_cycles(stop = 10) == {'d': 7, 'cycle': '142857', 'cycle_length': 6}
 
-reciprocal_cycles(start = 2, stop = 250, timeout = 500)
-reciprocal_cycles(start = 250, stop = 500, timeout = 500)
-reciprocal_cycles(start = 500, stop = 750, timeout = 500)
-reciprocal_cycles(start = 750, stop = 999, timeout = 500)
+reciprocal_cycles(timeout = 1000)
 
-x = [divide(n = 1, d = i, timeout = 1000, cycle_cutoff=True) for i in range(2, 1000)]
+divide(n = 1, d = 199)
 
-divide(n = 1, d = 17)
-divide(n = 1, d = 97, timeout = 200)
+reciprocal_cycles(start = 982, stop=984, timeout = 3000)
 
-# TODO: Struggling with efficiency, likely due to crazy n**4 runtime in get_cycle -- make more efficient so we can use larger timeouts
-# TODO: Why are there no cycles in any of the larger cohorts?
-
-'.01030927835051546391752577319587628865979381443298969072164948453608247422680412371134020618556701030927835051546391752577319587628865979381443298969072164948453608247422680412371134020618556701030927'
+divide(n = 1, d = 983, timeout = 1000, cycle_cutoff=True)
+divisor = '.0010172939979654120040691759918616480162767039674465920651068158697863682604272634791454730417090539'
+get_cycle(digits = divisor, minimum_cycles = 3)
